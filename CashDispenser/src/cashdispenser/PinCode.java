@@ -9,7 +9,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Vector;
 import javax.swing.*;
  
  
@@ -21,6 +29,8 @@ public class PinCode extends JPanel
     private JFrame controllingFrame; //needed for dialogs
     private JPasswordField passwordField;
     private JFrame f = new JFrame();
+    private Connection myConnection;
+    private static Vector v;
  
     public PinCode() {
         //Use the default FlowLayout.
@@ -30,8 +40,10 @@ public class PinCode extends JPanel
         passwordField = new JPasswordField(10);
         passwordField.setActionCommand(OK);
         passwordField.addActionListener(this);
+        
+        v = new Vector<String>();
  
-        JLabel label = new JLabel("Enter the password: ");
+        JLabel label = new JLabel("Enter the pincode: ");
         label.setLabelFor(passwordField);
  
         JComponent buttonPane = createButtonPanel();
@@ -45,6 +57,7 @@ public class PinCode extends JPanel
         f.setLocationRelativeTo(null);
         add(textPane);
         add(buttonPane);
+        //readInValuesFromDatabase();
     }
  
     protected JComponent createButtonPanel() {
@@ -65,14 +78,13 @@ public class PinCode extends JPanel
  
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
- 
         if (OK.equals(cmd)) { //Process the password.
-            char[] input = passwordField.getPassword();
+            int input = Integer.parseInt(passwordField.getText());
+            System.out.println("The input to actionPerformed was " + input);
             if (isPasswordCorrect(input)) {
                 JOptionPane.showMessageDialog(controllingFrame,
-                    "Success! You typed the right password.");
+                    "Success! You typed the right pincode.");
                 
-                //PinCode.close();
                 //Password was correct, run the Cash Dispenser
                 CashDispenser app;
                 app = new CashDispenser("Cash Dispenser");
@@ -88,7 +100,7 @@ public class PinCode extends JPanel
             }
  
             //Zero out the possible password, for security.
-            Arrays.fill(input, '0');
+            //Arrays.fill(input, '0');
  
             passwordField.selectAll();
             resetFocus();
@@ -104,20 +116,40 @@ public class PinCode extends JPanel
      * After this method returns, you should invoke eraseArray
      * on the passed-in array.
      */
-    private static boolean isPasswordCorrect(char[] input) {
-        boolean isCorrect = true;
-        char[] correctPassword = { 'p', 'a', 's', 's', 'w', 'o', 'r', 'd' };
- 
-        if (input.length != correctPassword.length) {
+    private boolean isPasswordCorrect(int input) {
+       boolean isCorrect = true;
+
+       setupDatabaseConnection();
+       String pass1 = "";
+       Integer passToInt = 0;
+       System.out.println("Value from input is " + input);
+       try {
+
+            //Statement stmt = myConnection.createStatement(); 
+            //ResultSet res = stmt.executeQuery("SELECT * FROM AccountHolder"))
+            //Connection con = myConnection.getConnection();
+            PreparedStatement stmt;
+            stmt = myConnection.prepareStatement("SELECT * FROM AccountHolder where pincode='" + input+"'");
+            ResultSet res = stmt.executeQuery();
+            res = stmt.executeQuery();
+            while (res.next()) {
+                pass1 = res.getString("pincode");
+                passToInt = Integer.parseInt(pass1);
+                System.out.println("Value from pass1 is " + pass1);
+                System.out.println("Value from passToInt is " + passToInt);
+            }
+            if (input == passToInt) { 
+                JOptionPane.showMessageDialog(this,"Correct pincode, carry on");
+            }
+            else {
+                JOptionPane.showMessageDialog(this,"Incorrect pincode","Error",JOptionPane.ERROR_MESSAGE);
+                isCorrect = false;
+            }
+        } catch (SQLException | HeadlessException ex) {
+            JOptionPane.showMessageDialog(null, ex.getMessage());
             isCorrect = false;
-        } else {
-            isCorrect = Arrays.equals (input, correctPassword);
         }
- 
-        //Zero out the password.
-        Arrays.fill(correctPassword,'0');
- 
-        return isCorrect;
+       return isCorrect;
     }
  
     //Must be called from the event dispatch thread.
@@ -132,7 +164,7 @@ public class PinCode extends JPanel
      */
     public static void createAndShowGUI() {
         //Create and set up the window.
-        JFrame frame = new JFrame("Enter Password");
+        JFrame frame = new JFrame("Enter Pincode");
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
  
@@ -153,6 +185,27 @@ public class PinCode extends JPanel
         frame.pack();
         frame.setVisible(true);
     }
+          /**
+     * Setting up the database connection
+     */
+  private void setupDatabaseConnection()
+  {      
+    try
+    {
+      Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+      this.myConnection = DriverManager.getConnection("jdbc:sqlserver://194.47.129.139;user=dv1454_ht13_49;password=pLNpoCz4;database=dv1454_ht13_49");
+      System.out.println("Successfully Connected to the database!");
+
+    }    
+    catch (ClassNotFoundException e) { 
+         System.out.println("Could not find the database driver " + e.getMessage());
+     } 
+    catch (SQLException e) {
+         System.out.println("Could not connect to the database " + e.getMessage());
+     }
+  
+    
+  }
 
   //
   // MAIN

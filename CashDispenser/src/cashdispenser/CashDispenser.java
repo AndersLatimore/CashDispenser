@@ -4,6 +4,7 @@
  */
 package cashdispenser;
 
+import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -16,17 +17,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.Timer;
 
 
 /**
@@ -44,50 +45,49 @@ public class CashDispenser extends JFrame
   // STATE
   //
   //private JTextField txtIn = new JTextField(20);
-  private JTextArea txtOut = new JTextArea(10,30);
-  //private JScrollPane scroll = new JScrollPane();
+  private JTextArea txtOut = new JTextArea(10, 30);
+  private JScrollPane scroll = new JScrollPane();
   private JScrollPane txtOutscroll = new JScrollPane();
   private JButton cmdClose = new JButton("Close");
   private JButton cmdLogOut = new JButton("Log Out");
-  private JButton cmdTransfer = new JButton("Transfer Sum");
+  private JButton cmdWithdraw = new JButton("Withdraw Sum");
   //private JComboBox c = new JComboBox();
   private Connection myConnection;
   private JTextField t = new JTextField(15);
   private Vector v = new Vector();
   private JComboBox jcb = new JComboBox(v);
   
-  
   // BEHAVIOUR
-  //
-  //
-  //
-  public CashDispenser()
+
+    /**
+     * Constructor
+     */
+    public CashDispenser()
   {
     super();
     init();
   }
 
-  //
-  //
-  //
-  public CashDispenser(String title)
+    /**
+     * Constructor
+     * @param title
+     */
+    public CashDispenser(String title)
   {
     super();
     this.setTitle(title);
     init();
   }
 
-
-  //
-  //
-  //
+    /**
+     * method to initiate everything
+     */
   private void init()
   {
     addComponentsToFrame();
     addListeners();
     setupDatabaseConnection();
     txtOut.append("Ok, logged in\r\n");
-    txtOut.add(txtOutscroll);
     
     try
     {
@@ -101,7 +101,7 @@ public class CashDispenser extends JFrame
                   //txtOut.append(res.getString("name") + "\r\n");
                   //txtOut.append(res.getString("street") + "\r\n");
                   
-                   jcb.addActionListener(new ActionListener() {
+              jcb.addActionListener(new ActionListener() {
               public void actionPerformed(ActionEvent e) {
                 txtOut.setText("index: " + jcb.getSelectedIndex() + "   "
                     + ((JComboBox) e.getSource()).getSelectedItem());
@@ -124,9 +124,9 @@ public class CashDispenser extends JFrame
     //this.setLocationRelativeTo(null);
   }
 
-  //
-  //
-  //
+    /**
+     * Setting up the database connection
+     */
   private void setupDatabaseConnection()
   {
       
@@ -147,10 +147,9 @@ public class CashDispenser extends JFrame
     
   }
 
-  
-  //
-  //
-  //
+  /**
+   * Add components to the frame
+   */
   private void addComponentsToFrame()
   {
     Container cp = this.getContentPane();
@@ -158,7 +157,10 @@ public class CashDispenser extends JFrame
     JPanel jpMain = new JPanel();
     jpMain.setLayout(new BoxLayout(jpMain,BoxLayout.Y_AXIS ));
     JPanel jpText = new JPanel();
-    jpText.setLayout(new FlowLayout());
+    jpText.setLayout(new BorderLayout());
+    scroll.setVerticalScrollBarPolicy(
+    JScrollPane.VERTICAL_SCROLLBAR_ALWAYS); 
+    jpText.add(scroll);
     JPanel jpButtons = new JPanel();
     jpButtons.setLayout(new FlowLayout());
     jpText.add(txtOut);
@@ -168,15 +170,15 @@ public class CashDispenser extends JFrame
     cp.add(jpMain);
     cp.add(cmdClose);
     cp.add(cmdLogOut);
-    cp.add(cmdTransfer);
+    cp.add(cmdWithdraw);
     //cp.add(c);
     cp.add(t);
   }
 
 
-  //
-  //
-  //
+    /**
+     * Add listeners
+     */ 
   private void addListeners()
   {
     this.addWindowListener(new WindowAdapter()
@@ -204,20 +206,30 @@ public class CashDispenser extends JFrame
       }
     });
     
-    cmdTransfer.addActionListener(new ActionListener(){
+    cmdWithdraw.addActionListener(new ActionListener(){
         public void actionPerformed(ActionEvent ae){
             String textFieldValue = t.getText();
-            txtOut.append(textFieldValue);
+                
+        try {
+            Integer transferSum = Integer.parseInt(textFieldValue);
+            txtOut.setText("");
+            String outputString = "You withdrew $" + transferSum.toString();
+            txtOut.append("You withdrew $" + transferSum.toString() + "\r\n");
+            timedDialog(outputString);
+         } catch (NumberFormatException e) {
+            System.out.println("This is not a number");
+            System.out.println(e.getMessage());
+         }
+
         }
     });
     
-    };
   }
-
-  
-  //
-  //
-  //
+  }
+ 
+    /**
+     * Close the frame, close everything
+     */
   private void closeFrame()
   {
     try
@@ -232,8 +244,10 @@ public class CashDispenser extends JFrame
     System.exit(0);
   }
 
-
-   private void logOutButtonPressed()
+  /**
+   * Log out, close everything
+   */
+  private void logOutButtonPressed()
   {
       try
     {
@@ -246,4 +260,25 @@ public class CashDispenser extends JFrame
     } 
     System.exit(0);
   }
+  
+  public void timedDialog(String input) {
+     JFrame f = new JFrame();
+     JTextField text = new JTextField(input);
+        final JDialog dialog = new JDialog(f, "Confirmation of withdrawal", true);
+        dialog.setSize(200, 150);
+        dialog.add(text);
+        dialog.setLocationRelativeTo(null);
+        Timer timer = new Timer(3000, new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                dialog.setVisible(false);
+                dialog.dispose();
+            }
+        });
+        timer.setRepeats(false);
+        timer.start();
+
+        dialog.setVisible(true); // if modal, application will pause here
+
+        System.out.println("Dialog closed");
+    }
 }
