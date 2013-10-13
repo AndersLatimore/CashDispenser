@@ -14,9 +14,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Vector;
 import javax.swing.*;
  
@@ -30,7 +27,7 @@ public class PinCode extends JPanel
     private JPasswordField passwordField;
     private JFrame f = new JFrame();
     private Connection myConnection;
-    private static Vector v;
+    //private static Vector v;
  
     public PinCode() {
         //Use the default FlowLayout.
@@ -41,7 +38,7 @@ public class PinCode extends JPanel
         passwordField.setActionCommand(OK);
         passwordField.addActionListener(this);
         
-        v = new Vector<String>();
+        //v = new Vector<String>();
  
         JLabel label = new JLabel("Enter the pincode: ");
         label.setLabelFor(passwordField);
@@ -76,6 +73,7 @@ public class PinCode extends JPanel
         return p;
     }
  
+    @Override
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
         if (OK.equals(cmd)) { //Process the password.
@@ -87,7 +85,7 @@ public class PinCode extends JPanel
                 
                 //Password was correct, run the Cash Dispenser
                 CashDispenser app;
-                app = new CashDispenser("Cash Dispenser");
+                app = new CashDispenser("Cash Dispenser", input);
                 app.setSize(600,450);
                 app.setVisible(true);
                 app.pack();
@@ -122,12 +120,7 @@ public class PinCode extends JPanel
        setupDatabaseConnection();
        String pass1 = "";
        Integer passToInt = 0;
-       System.out.println("Value from input is " + input);
        try {
-
-            //Statement stmt = myConnection.createStatement(); 
-            //ResultSet res = stmt.executeQuery("SELECT * FROM AccountHolder"))
-            //Connection con = myConnection.getConnection();
             PreparedStatement stmt;
             stmt = myConnection.prepareStatement("SELECT * FROM AccountHolder where pincode='" + input+"'");
             ResultSet res = stmt.executeQuery();
@@ -135,8 +128,6 @@ public class PinCode extends JPanel
             while (res.next()) {
                 pass1 = res.getString("pincode");
                 passToInt = Integer.parseInt(pass1);
-                System.out.println("Value from pass1 is " + pass1);
-                System.out.println("Value from passToInt is " + passToInt);
             }
             if (input == passToInt) { 
                 JOptionPane.showMessageDialog(this,"Correct pincode, carry on");
