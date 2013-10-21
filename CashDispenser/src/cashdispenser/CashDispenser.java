@@ -156,7 +156,7 @@ public class CashDispenser extends JFrame
     try
     {
       Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-      this.myConnection = DriverManager.getConnection("jdbc:sqlserver://194.47.129.139;user=dv1454_ht13_49;password=pLNpoCz4;database=dv1454_ht13_49");
+      this.myConnection = DriverManager.getConnection("jdbc:sqlserver://194.47.129.139;user=dv1454_ht13_49;password=password;database=dv1454_ht13_49");
       System.out.println("Successfully Connected to the database!");
 
     }    
